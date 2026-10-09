@@ -1,16 +1,40 @@
-# React + Vite
+# Esplay ToDo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Frågor om koden
 
-Currently, two official plugins are available:
+### State-hantering
+Appen sparar alla uppgifter i en array med `useState` i `App.jsx`. Varje uppgift är ett objekt med `id`, `text` och `completed`, där `completed` visar om uppgiften är klar eller inte. Text som användaren skriver i inputfältet sparas i ett eget state, `newTodo`. När jag anropar `setTodos` med en ny lista renderar React om komponenten, så att listan och räknaren direkt visar den nya datan utan att sidan laddas om.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Oföränderlighet
+React jämför den gamla och den nya array för att se om någonting har ändrats. Om man använder `.push()` ändras samma array så react ser ingen skillnad och gränssnittet uppdateras inte. Därför skapar jag alltid en ny array när jag lägger till en uppgift använder jag spread `[...prevTodos, todo]`, och när jag tar bort en uppgift använder jag `.filter()`, som skapar en ny lista utan den valda uppgiften. När en uppgift markeras som klar använder jag `.map()` och skapar ett nytt objekt med `{ ...todo, completed: !todo.completed }`.
 
-## React Compiler
+## Kodgranskning
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```javascript
+function addTodo(todos, text) {
+  todos.push(text);
+  return todos;
+}
+```
 
-## Expanding the ESLint configuration
+Funktionen ska lägga till en ny uppgift i listan så att den syns på skärmen.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Den tar emot listan todos och en text. Sen använder den push som ändrar direkt i den gamla listan, och returnerar samma lista igen. Den lägger också bara till en text och inte ett objekt med id och completed.
+
+Problemet är att React inte märker att något har ändrats eftersom det fortfarande är samma lista. Då uppdateras inte skärmen och den nya uppgiften syns inte.
+
+Koden försöker lägga till en uppgift med push, men problemet är att den ändrar direkt i state så att React inte upptäcker ändringen. Ett bättre sätt är att skapa en ny lista med spread och lägga till ett nytt objekt.
+
+function addTodo(todos, text) {
+  const newTodo = { id: crypto.randomUUID(), text: text, completed: false }
+  return [...todos, newTodo]
+}
+
+## Problemlösning och reflektion
+
+När jag skulle koppla inputfältet till state skrev jag `value={}` utan något innehåll och fick felet "JSX attributes must only be assigned a non-empty expression", både i VSC och i webbläsaren. Jag frågade Claude ai vad felet betydde och fick förklarat att `value` ska visa det nuvarande värdet från state, alltså `newTodo`, medan `setNewTodo` används i `onChange` för att ändra det. Sen så rättade jag själv till raden `value={newTodo}` och testade att texten följde med när jag skrev. Under projektet har jag också använt ai för förklaringar, små kodexempel, styling och felsökning.
+
+
+## Muntlig redovisning
+
+länk till den muntliga redovisningen: https://funet-my.sharepoint.com/:v:/g/personal/3ggyhmu26_uzeiem_folkuniversitetet_nu/IQC4Fdgz5DAmQKR3E1Ve3OHtAYA7DNyETUw84M6p86vEaNQ?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=bhMckx
